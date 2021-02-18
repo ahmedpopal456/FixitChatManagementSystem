@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.Lib", "Fixit.Chat.Management.Lib\Fixit.Chat.Management.Lib.csproj", "{589962D3-6F20-4C20-953B-B1110526BE76}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.ServerlessApi", "Fixit.Chat.Management.ServerlessApi\Fixit.Chat.Management.ServerlessApi.csproj", "{89521B86-9CC3-462F-AA59-5357E6FCFDE2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.Triggers", "Fixit.Chat.Management.Triggers\Fixit.Chat.Management.Triggers.csproj", "{C2137E94-0B88-4941-948E-D51F9F6AB987}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fixit.Chat.Management.Lib.UnitTests", "Fixit.Chat.Management.Lib.UnitTests\Fixit.Chat.Management.Lib.UnitTests.csproj", "{022D5B9A-B27E-4F22-8F35-A953B0FD702B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{589962D3-6F20-4C20-953B-B1110526BE76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{589962D3-6F20-4C20-953B-B1110526BE76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{589962D3-6F20-4C20-953B-B1110526BE76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{589962D3-6F20-4C20-953B-B1110526BE76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89521B86-9CC3-462F-AA59-5357E6FCFDE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89521B86-9CC3-462F-AA59-5357E6FCFDE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89521B86-9CC3-462F-AA59-5357E6FCFDE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89521B86-9CC3-462F-AA59-5357E6FCFDE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2137E94-0B88-4941-948E-D51F9F6AB987}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2137E94-0B88-4941-948E-D51F9F6AB987}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2137E94-0B88-4941-948E-D51F9F6AB987}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2137E94-0B88-4941-948E-D51F9F6AB987}.Release|Any CPU.Build.0 = Release|Any CPU
+		{022D5B9A-B27E-4F22-8F35-A953B0FD702B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{022D5B9A-B27E-4F22-8F35-A953B0FD702B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{022D5B9A-B27E-4F22-8F35-A953B0FD702B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{022D5B9A-B27E-4F22-8F35-A953B0FD702B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CA94030D-6EB9-4947-A256-C794EB96B27F}
+	EndGlobalSection
+EndGlobal
