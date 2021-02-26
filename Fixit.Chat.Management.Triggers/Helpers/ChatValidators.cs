@@ -1,4 +1,5 @@
 ﻿using System;
+using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Core.DataContracts.Chat;
 using Newtonsoft.Json;
 
@@ -21,6 +22,35 @@ namespace Fixit.Chat.Management.Triggers.Helpers
           if (isValid)
           {
             conversationCreateRequestDto = createConversationDeserialized;
+          }
+        }
+      }
+      catch
+      {
+        // Fall through
+      }
+
+      return isValid;
+    }
+
+    public static bool IsValidUserMessageCreateRequestDto(string queueItem, out UserMessageCreateRequestDto userMessageCreateRequestDto)
+    {
+      bool isValid = false;
+      userMessageCreateRequestDto = null;
+
+      try
+      {
+        var createUserMessageDeserialized = JsonConvert.DeserializeObject<UserMessageCreateRequestDto>(queueItem);
+        if (createUserMessageDeserialized != null)
+        {
+          isValid = !createUserMessageDeserialized.ConversationId.Equals(Guid.Empty)
+                 && !createUserMessageDeserialized.ReceiverUserId.Equals(Guid.Empty)
+                 && createUserMessageDeserialized.Message != null
+                 && !string.IsNullOrWhiteSpace(createUserMessageDeserialized.Message.Message);
+
+          if (isValid)
+          {
+            userMessageCreateRequestDto = createUserMessageDeserialized;
           }
         }
       }
