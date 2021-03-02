@@ -68,25 +68,15 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       if (messageDocumentCollection.IsOperationSuccessful)
       {
         MessageDocument messageDocument = messageDocumentCollection.Results.SingleOrDefault();
-        if (messageDocument == default(MessageDocument))
-        {
-          var currentTime = DateTimeOffset.UtcNow;
+        var currentTime = DateTimeOffset.UtcNow;
 
-          MessageDocument newMessageDocument = new MessageDocument()
-          {
-            ConversationId = userMessageCreateRequestDto.ConversationId,
-            Messages = new List<MessageDto>()
-            {
-              userMessageCreateRequestDto.Message
-            }
-          };
-          result = await _databaseMessagesTable.CreateItemAsync(newMessageDocument, currentTime.ToString("yyyy-MM"), cancellationToken);
-        }
-        else
+        messageDocument ??= new MessageDocument()
         {
-          messageDocument.Messages.Add(userMessageCreateRequestDto.Message);
-          result = await _databaseMessagesTable.UpdateItemAsync(messageDocument, messageDocument.EntityId, cancellationToken);
-        }
+          ConversationId = userMessageCreateRequestDto.ConversationId,
+        };
+
+        messageDocument.Messages.Add(userMessageCreateRequestDto.Message);
+        result = await _databaseMessagesTable.UpdateItemAsync(messageDocument, messageDocument.EntityId ?? currentTime.ToString("yyyy-MM"), cancellationToken);
 
         if (result.IsOperationSuccessful)
         {

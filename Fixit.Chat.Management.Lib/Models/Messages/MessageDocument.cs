@@ -13,8 +13,14 @@ namespace Fixit.Chat.Management.Lib.Models.Messages
     [DataMember]
     public Guid ConversationId { get; set; }
 
+    private ICollection<MessageDto> _messages;
+
     [DataMember]
-    public ICollection<MessageDto> Messages { get; set; }
+    public ICollection<MessageDto> Messages
+    {
+      get => _messages ??= new List<MessageDto>();
+      set => _messages = value;
+    }
 
     #region IFakeSeederAdapter
     IList<MessageDocument> IFakeSeederAdapter<MessageDocument>.SeedFakeDtos()
