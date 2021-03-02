@@ -70,7 +70,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
         MessageDocument messageDocument = messageDocumentCollection.Results.SingleOrDefault();
         if (messageDocument == default(MessageDocument))
         {
-          var currentTime = DateTimeOffset.Now;
+          var currentTime = DateTimeOffset.UtcNow;
 
           MessageDocument newMessageDocument = new MessageDocument()
           {

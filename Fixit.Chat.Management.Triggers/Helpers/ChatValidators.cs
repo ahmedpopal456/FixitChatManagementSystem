@@ -17,7 +17,7 @@ namespace Fixit.Chat.Management.Triggers.Helpers
         var createConversationDeserialized = JsonConvert.DeserializeObject<ConversationCreateRequestDto>(queueItem);
         if (createConversationDeserialized != null)
         {
-          isValid = !createConversationDeserialized.FixInstanceId.Equals(Guid.Empty) && createConversationDeserialized.Participants.Count > default(int);
+          isValid = !createConversationDeserialized.FixInstanceId.Equals(Guid.Empty) && createConversationDeserialized.Participants != null && createConversationDeserialized.Participants.Count > default(int);
 
           if (isValid)
           {

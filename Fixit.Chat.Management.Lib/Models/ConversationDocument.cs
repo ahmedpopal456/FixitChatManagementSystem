@@ -14,8 +14,14 @@ namespace Fixit.Chat.Management.Lib.Models
     [DataMember]
     public Guid FixInstanceId { get; set; }
 
+    private ICollection<ParticipantDto> _participants;
+
     [DataMember]
-    public ICollection<ParticipantDto> Participants { get; set; }
+    public ICollection<ParticipantDto> Participants
+    {
+      get => _participants ??= new List<ParticipantDto>();
+      set => _participants = value;
+    }
 
     [DataMember]
     public MessageDto LastMessage { get; set; }

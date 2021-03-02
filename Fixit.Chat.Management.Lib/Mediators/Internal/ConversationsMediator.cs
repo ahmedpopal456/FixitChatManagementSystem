@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,19 +67,10 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       cancellationToken.ThrowIfCancellationRequested();
 
       ConversationDocument conversationDocument = new ConversationDocument() { FixInstanceId = conversationCreateRequestDto.FixInstanceId };
-      var currentTime = DateTimeOffset.Now;
+      var currentTime = DateTimeOffset.UtcNow;
       conversationDocument.CreatedTimestampsUtc = currentTime.ToUnixTimeSeconds();
-
-      if (conversationDocument.Participants == null)
-      {
-        conversationDocument.Participants = new List<ParticipantDto>();
-      }
-      foreach (var user in conversationCreateRequestDto.Participants)
-      {
-        var participant = new ParticipantDto() { User = user };
-        participant.CreatedTimestampsUtc = currentTime.ToUnixTimeSeconds();
-        conversationDocument.Participants.Add(participant);
-      }
+      conversationDocument.Participants = conversationCreateRequestDto.Participants.Select(user => new ParticipantDto() { User = user, CreatedTimestampsUtc = currentTime.ToUnixTimeSeconds() })
+                                                                                   .ToList();
 
       var result = await _databaseConversationTable.CreateItemAsync(conversationDocument, currentTime.ToString("yyyy-MM"), cancellationToken);
 
