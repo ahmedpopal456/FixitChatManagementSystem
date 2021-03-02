@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -76,7 +75,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
         };
 
         messageDocument.Messages.Add(userMessageCreateRequestDto.Message);
-        result = await _databaseMessagesTable.UpdateItemAsync(messageDocument, messageDocument.EntityId ?? currentTime.ToString("yyyy-MM"), cancellationToken);
+        result = await _databaseMessagesTable.UpsertItemAsync(messageDocument, messageDocument.EntityId ?? currentTime.ToString("yyyy-MM"), cancellationToken);
 
         if (result.IsOperationSuccessful)
         {
