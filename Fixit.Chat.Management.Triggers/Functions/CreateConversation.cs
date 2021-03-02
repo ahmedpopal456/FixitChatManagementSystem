@@ -10,11 +10,11 @@ namespace Fixit.Chat.Management.Triggers.Functions
 {
   public class CreateConversation
   {
-    private readonly IChatMediator _chatMediator;
+    private readonly IConversationsMediator _conversationsMediator;
 
-    public CreateConversation(IChatMediator chatMediator)
+    public CreateConversation(IConversationsMediator conversationsMediator)
     {
-      _chatMediator = chatMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(chatMediator)}... null argument was provided");
+      _conversationsMediator = conversationsMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(conversationsMediator)}... null argument was provided");
     }
 
     [FunctionName("CreateConversation")]
@@ -32,7 +32,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
         return;
       }
 
-      await _chatMediator.CreateConversationAsync(conversationCreateRequestDto, cancellationToken);
+      await _conversationsMediator.CreateConversationAsync(conversationCreateRequestDto, cancellationToken);
     }
   }
 }

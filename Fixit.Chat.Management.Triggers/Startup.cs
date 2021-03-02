@@ -20,11 +20,17 @@ namespace Fixit.Chat.Management.Triggers
       DatabaseFactory databaseFactory = new DatabaseFactory(configuration["FIXIT-CM-DB-EP"], configuration["FIXIT-CM-DB-KEY"]);
 
       builder.Services.AddSingleton<IDatabaseMediator>(databaseFactory.CreateCosmosClient());
-      builder.Services.AddSingleton<IChatMediator, ChatMediator>(provider =>
+      builder.Services.AddSingleton<IConversationsMediator, ConversationsMediator>(provider =>
       {
         var databaseMediator = provider.GetService<IDatabaseMediator>();
         var configuration = provider.GetService<IConfiguration>();
-        return new ChatMediator(databaseMediator, configuration);
+        return new ConversationsMediator(databaseMediator, configuration);
+      });
+      builder.Services.AddSingleton<IMessagesMediator, MessagesMediator>(provider =>
+      {
+        var databaseMediator = provider.GetService<IDatabaseMediator>();
+        var configuration = provider.GetService<IConfiguration>();
+        return new MessagesMediator(databaseMediator, configuration);
       });
     }
   }

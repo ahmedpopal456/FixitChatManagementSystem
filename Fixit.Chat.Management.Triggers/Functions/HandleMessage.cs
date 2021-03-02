@@ -10,11 +10,11 @@ namespace Fixit.Chat.Management.Triggers.Functions
 {
   public class HandleMessage
   {
-    private readonly IChatMediator _chatMediator;
+    private readonly IMessagesMediator _messagesMediator;
 
-    public HandleMessage(IChatMediator chatMediator) : base()
+    public HandleMessage(IMessagesMediator messagesMediator) : base()
     {
-      _chatMediator = chatMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(chatMediator)}... null argument was provided");
+      _messagesMediator = messagesMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(messagesMediator)}... null argument was provided");
     }
 
     [FunctionName("HandleMessage")]
@@ -32,7 +32,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
         return;
       }
 
-      await _chatMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
+      await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
     }
   }
 }

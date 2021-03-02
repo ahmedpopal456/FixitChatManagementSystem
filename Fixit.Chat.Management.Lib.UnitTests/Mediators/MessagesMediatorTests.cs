@@ -5,12 +5,10 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Mediators.Internal;
-using Fixit.Chat.Management.Lib.Models;
 using Fixit.Chat.Management.Lib.Models.Messages;
 using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Core.Database.DataContracts.Documents;
 using Fixit.Core.Database.Mediators;
-using Fixit.Core.DataContracts.Chat;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -18,20 +16,17 @@ using Moq;
 namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
 {
   [TestClass]
-  public class ChatMediatorTests : TestBase
+  public class MessagesMediatorTests : TestBase
   {
-    private ChatMediator _chatMediator;
+    private MessagesMediator _messagesMediator;
 
     // Fake data
-    private IEnumerable<ConversationDocument> _fakeConversationDocuments;
-    private IEnumerable<ConversationCreateRequestDto> _fakeConversationCreateRequestDtos;
     private IEnumerable<MessageDocument> _fakeMessageDocuments;
     private IEnumerable<UserMessageCreateRequestDto> _fakeUserMessageCreateRequestDtos;
 
     // DB and table name
 
     private readonly string _chatDatabaseName = "ChatDatabaseName";
-    private readonly string _conversationsDatabaseTableName = "ConversationsTableName";
     private readonly string _messagesDatabaseTableName = "MessagesTableName";
 
     #region TestInitialize
@@ -46,45 +41,17 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _messagesTableEntityMediator = new Mock<IDatabaseTableEntityMediator>();
 
       // Create fake data objects
-      _fakeConversationDocuments = _fakeDtoSeedFactory.CreateSeederFactory<ConversationDocument>(new ConversationDocument());
-      _fakeConversationCreateRequestDtos = _fakeDtoSeedFactory.CreateSeederFactory<ConversationCreateRequestDto>(new ConversationCreateRequestDto());
       _fakeMessageDocuments = _fakeDtoSeedFactory.CreateSeederFactory<MessageDocument>(new MessageDocument());
       _fakeUserMessageCreateRequestDtos = _fakeDtoSeedFactory.CreateSeederFactory<UserMessageCreateRequestDto>(new UserMessageCreateRequestDto());
 
       _databaseMediator.Setup(databaseMediator => databaseMediator.GetDatabase(_chatDatabaseName))
                        .Returns(_databaseTableMediator.Object);
-      _databaseTableMediator.Setup(databaseTableMediator => databaseTableMediator.GetContainer(_conversationsDatabaseTableName))
-                       .Returns(_conversationsTableEntityMediator.Object);
       _databaseTableMediator.Setup(databaseTableMediator => databaseTableMediator.GetContainer(_messagesDatabaseTableName))
                        .Returns(_messagesTableEntityMediator.Object);
 
-      _chatMediator = new ChatMediator(_databaseMediator.Object,
-                                       _chatDatabaseName,
-                                       _conversationsDatabaseTableName,
-                                       _messagesDatabaseTableName);
-    }
-    #endregion
-
-    #region CreateConversationAsync
-    [TestMethod]
-    public async Task CreateConversationAsync_CreateRequestSuccess_ReturnsSuccess()
-    {
-      //Arrange
-      var cancellationToken = CancellationToken.None;
-      var conversationCreateRequestDto = _fakeConversationCreateRequestDtos.First();
-
-      var conversationDocument = new ConversationDocument();
-
-      _conversationsTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.CreateItemAsync(It.IsAny<ConversationDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                                  .Callback<ConversationDocument, string, CancellationToken>((document, partitionKey, cancellationToken) => conversationDocument = document)
-                                  .ReturnsAsync(new CreateDocumentDto<ConversationDocument>() { Document = _fakeConversationDocuments.First() });
-
-      //Act
-      await _chatMediator.CreateConversationAsync(conversationCreateRequestDto, cancellationToken);
-
-      //Assert
-      Assert.AreEqual(conversationDocument.FixInstanceId, conversationCreateRequestDto.FixInstanceId);
-      Assert.AreEqual(conversationDocument.Participants.Count, conversationCreateRequestDto.Participants.Count);
+      _messagesMediator = new MessagesMediator(_databaseMediator.Object,
+                                               _chatDatabaseName,
+                                               _messagesDatabaseTableName);
     }
     #endregion
 
@@ -112,7 +79,7 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
                                   .ReturnsAsync(new CreateDocumentDto<MessageDocument>() { Document = _fakeMessageDocuments.First() });
 
       //Act
-      await _chatMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
+      await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
       //Assert
       _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.CreateItemAsync(It.IsAny<MessageDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
@@ -144,7 +111,7 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
                                   .ReturnsAsync(new CreateDocumentDto<MessageDocument>() { Document = _fakeMessageDocuments.First() });
 
       //Act
-      await _chatMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
+      await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
       //Assert
       _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpdateItemAsync(It.IsAny<MessageDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
@@ -161,11 +128,11 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _configuration.Reset();
       _databaseMediator.Reset();
       _databaseTableMediator.Reset();
-      _conversationsTableEntityMediator.Reset();
+      _messagesTableEntityMediator.Reset();
 
       // Clean-up data objects
-      _fakeConversationDocuments = null;
-      _fakeConversationCreateRequestDtos = null;
+      _fakeMessageDocuments = null;
+      _fakeUserMessageCreateRequestDtos = null;
     }
     #endregion
   }
