@@ -8,7 +8,7 @@ using Fixit.Core.DataContracts.Users;
 namespace Fixit.Chat.Management.Lib.Models.Messages
 {
   [DataContract]
-  public class MessageDocument : DocumentBase, IFakeSeederAdapter<MessageDocument>
+  public class ConversationMessagesDocument : DocumentBase, IFakeSeederAdapter<ConversationMessagesDocument>
   {
     [DataMember]
     public Guid ConversationId { get; set; }
@@ -23,9 +23,9 @@ namespace Fixit.Chat.Management.Lib.Models.Messages
     }
 
     #region IFakeSeederAdapter
-    IList<MessageDocument> IFakeSeederAdapter<MessageDocument>.SeedFakeDtos()
+    IList<ConversationMessagesDocument> IFakeSeederAdapter<ConversationMessagesDocument>.SeedFakeDtos()
     {
-      MessageDocument firstMessageDocument = new MessageDocument
+      ConversationMessagesDocument firstMessagesDocument = new ConversationMessagesDocument
       {
         ConversationId = new Guid("3265a8a0-5d73-497c-b3ae-a914259f3800"),
         Messages = new List<MessageDto>()
@@ -47,12 +47,12 @@ namespace Fixit.Chat.Management.Lib.Models.Messages
         }
       };
 
-      MessageDocument secondMessageDocument = null;
+      ConversationMessagesDocument secondMessagesDocument = null;
 
-      return new List<MessageDocument>
+      return new List<ConversationMessagesDocument>
       {
-        firstMessageDocument,
-        secondMessageDocument
+        firstMessagesDocument,
+        secondMessagesDocument
       };
     }
     #endregion

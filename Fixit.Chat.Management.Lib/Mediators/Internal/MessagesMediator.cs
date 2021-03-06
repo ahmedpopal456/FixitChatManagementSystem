@@ -15,7 +15,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
 {
   internal class MessagesMediator : IMessagesMediator
   {
-    private readonly IDatabaseTableEntityMediator _databaseMessagesTable;
+    private readonly IDatabaseTableEntityMediator _databaseConversationMessagesTable;
 
     public MessagesMediator(IDatabaseMediator databaseMediator,
                             IConfiguration configurationProvider)
@@ -33,7 +33,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
         throw new ArgumentNullException($"{nameof(MessagesMediator)} expects a value for {nameof(databaseMediator)}... null argument was provided");
       }
 
-      _databaseMessagesTable = databaseMediator.GetDatabase(databaseName).GetContainer(databaseMessagesTableName);
+      _databaseConversationMessagesTable = databaseMediator.GetDatabase(databaseName).GetContainer(databaseMessagesTableName);
     }
 
     public MessagesMediator(IDatabaseMediator databaseMediator,
@@ -55,7 +55,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
         throw new ArgumentNullException($"{nameof(MessagesMediator)} expects a value for {nameof(databaseMediator)}... null argument was provided");
       }
 
-      _databaseMessagesTable = databaseMediator.GetDatabase(databaseName).GetContainer(messagesTableName);
+      _databaseConversationMessagesTable = databaseMediator.GetDatabase(databaseName).GetContainer(messagesTableName);
     }
 
     public async Task HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken)
@@ -63,19 +63,19 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       cancellationToken.ThrowIfCancellationRequested();
       OperationStatus result;
 
-      var (messageDocumentCollection, token) = await _databaseMessagesTable.GetItemQueryableAsync<MessageDocument>(null, cancellationToken, messageDocument => messageDocument.ConversationId == userMessageCreateRequestDto.ConversationId);
+      var (messageDocumentCollection, token) = await _databaseConversationMessagesTable.GetItemQueryableAsync<ConversationMessagesDocument>(null, cancellationToken, messageDocument => messageDocument.ConversationId == userMessageCreateRequestDto.ConversationId);
       if (messageDocumentCollection.IsOperationSuccessful)
       {
-        MessageDocument messageDocument = messageDocumentCollection.Results.SingleOrDefault();
+        ConversationMessagesDocument messageDocument = messageDocumentCollection.Results.SingleOrDefault();
         var currentTime = DateTimeOffset.UtcNow;
 
-        messageDocument ??= new MessageDocument()
+        messageDocument ??= new ConversationMessagesDocument()
         {
           ConversationId = userMessageCreateRequestDto.ConversationId,
         };
 
         messageDocument.Messages.Add(userMessageCreateRequestDto.Message);
-        result = await _databaseMessagesTable.UpsertItemAsync(messageDocument, messageDocument.EntityId ?? currentTime.ToString("yyyy-MM"), cancellationToken);
+        result = await _databaseConversationMessagesTable.UpsertItemAsync(messageDocument, messageDocument.EntityId ?? currentTime.ToString("yyyy-MM"), cancellationToken);
 
         if (result.IsOperationSuccessful)
         {
