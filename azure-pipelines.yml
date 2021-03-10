@@ -1,0 +1,207 @@
+trigger:
+  branches:
+    include:
+      - development
+      - staging
+      - master
+
+variables:
+
+  # Solution Variables
+  buildPlatform: 'x64'
+  buildProjects: '**/Fixit.Chat.Management*.csproj'
+  publishLibrary: '**/Fixit.Chat.Management.Lib.csproj'
+  publishServerlessApi: '**/Fixit.Chat.Management.ServerlessApi.csproj'
+  publishTriggers: '**/Fixit.Chat.Management.Triggers.csproj'
+
+   # Version Handling Variables
+  majorProductVersion: 1
+  minorProductVersion: 0
+ 
+  # Artifact Drop Folder
+  artifactName: 'drop'
+
+jobs:
+# master branch versioning
+- job: Build_Master_Version_Number
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+  variables:
+    masterMajorMinor: $(majorProductVersion).$(minorProductVersion)
+    masterPatchCount: $[counter(variables['masterMajorMinor'], 0)]
+  steps:
+    - bash: |
+        echo "##vso[build.updatebuildnumber]$(majorProductVersion).$(minorProductVersion).$(masterPatchCount)"
+      name: IfMasterSetBuildNameAndPatch
+
+# staging branch versioning
+- job: Build_Staging_Version_Number
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/staging')
+  variables:
+    stagingMajorMinor: $(majorProductVersion).$(minorProductVersion)-beta
+    stagingPatchCount: $[counter(variables['stagingMajorMinor'], 0)]
+  steps:
+    - bash: |
+        echo "##vso[build.updatebuildnumber]$(majorProductVersion).$(minorProductVersion).$(stagingPatchCount)-beta"
+      name: IfStagingSetBuildNameAndPatch
+
+# development branch versioning
+- job: Build_Development_Version_Number
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+  variables:
+    stagingMajorMinor: $(majorProductVersion).$(minorProductVersion)-alpha
+    stagingPatchCount: $[counter(variables['stagingMajorMinor'], 0)]
+  steps:
+    - bash: |
+        echo "##vso[build.updatebuildnumber]$(majorProductVersion).$(minorProductVersion).$(stagingPatchCount)-alpha"
+      name: IfDelevopmentSetBuildNameAndPatch
+
+# PR versioning for master branch, staging branch & development branch
+- job: Build_PullRequest_Version_Number
+  condition: and(ne(variables['Build.SourceBranch'], 'refs/heads/master'), ne(variables['Build.SourceBranch'], 'refs/heads/staging'), ne(variables['Build.SourceBranch'], 'refs/heads/development'), eq(variables['Build.Reason'], 'PullRequest'))
+  variables:
+    pullRequestMajorMinor: $(majorProductVersion).$(minorProductVersion)-pre-alpha$(variables['system.pullrequest.pullrequestid'])
+    pullRequestPatchCount: $[counter(variables['pullRequestMajorMinor'], 0)]
+  steps:
+    - bash: |
+        echo "##vso[build.updatebuildnumber]$(majorProductVersion).$(minorProductVersion).0-pre-alpha$(system.pullrequest.pullrequestid)-$(pullRequestPatchCount)"
+      name: IfPullRequestBuildNameAndPatch
+
+# Name branch prefix to build version (master branch, staging branch & development branch)
+- job: Build_Branch_Version_Number
+  condition: and(ne(variables['Build.SourceBranch'], 'refs/heads/master'), ne(variables['Build.SourceBranch'], 'refs/heads/staging'), ne(variables['Build.SourceBranch'], 'refs/heads/development'), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+    branchMajorMinor: $(majorProductVersion).$(minorProductVersion)-br$(variables['build.sourcebranch'])
+    branchPatchCount: $[counter(variables['branchMajorMinor'], 0)]
+  steps:
+    - bash: |
+        echo "##vso[build.updatebuildnumber]$(majorProductVersion).$(minorProductVersion).0-$(Build.BuildId)-$(branchPatchCount)"
+      name: IfBranchBuildNameAndPatch
+
+- job: Build_Chat_Management_System
+  dependsOn:
+    - Build_Branch_Version_Number
+    - Build_PullRequest_Version_Number
+    - Build_Development_Version_Number
+    - Build_Staging_Version_Number
+    - Build_Master_Version_Number
+  condition: or(succeeded('Build_Branch_Version_Number'), succeeded('Build_PullRequest_Version_Number'), succeeded('Build_Development_Version_Number'), succeeded('Build_Staging_Version_Number'), succeeded('Build_Master_Version_Number'))
+
+  # Set Docker
+  pool:
+    vmImage: 'windows-2019'
+    displayName: Run Main Build and Test Pipeline
+
+  steps:
+  # Installer
+  - task: NuGetToolInstaller@0
+    displayName: 'Use NuGet 4.4.1'
+    inputs:
+      versionSpec: 4.4.1
+
+  # Specify sdk Version
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.1.102'
+  
+  # Restore
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: '$(buildProjects)'
+      includeNuGetOrg: true
+      feedsToUse: 'config'
+      nugetConfigPath: 'nuget.config'
+
+  # Prepare Sonar Cloud Analysis
+  - task: SonarCloudPrepare@1
+    inputs:
+      SonarCloud: 'fixit-sonarcloud'
+      organization: 'fixit'
+      scannerMode: 'MSBuild'
+      projectKey: 'fixit-app_FixitChatManagementSystem'
+      projectName: 'FixitChatManagementSystem'
+      extraProperties: |
+        sonar.exclusions=**/obj/**,**/*.dll
+        sonar.cs.opencover.reportsPaths=$(Build.SourcesDirectory)/**/coverage.opencover.xml
+        sonar.cs.vstest.reportsPaths=$(Agent.TempDirectory)/*.trx
+  
+  # Build
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      projects: '$(buildProjects)'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+  
+  # Tests
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: 'test'
+      testRunTitle: 'Fixit Chat Unit Tests'
+      projects: '**/*.UnitTests.csproj'
+      arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
+      nobuild: true
+
+  - script: |
+      dotnet tool install -g dotnet-reportgenerator-globaltool --version 4.8.4 --ignore-failed-sources
+      reportgenerator "-reports:$(Build.SourcesDirectory)/**/coverage.opencover.xml" "-targetdir:$(Build.SourcesDirectory)/CodeCoverage" "-reporttypes:HtmlInline_AzurePipelines;Cobertura"
+    displayName: Create Code coverage report
+
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish code coverage'
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+      reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'     
+  
+  # Run Sonar Cloud Analysis
+  - task: SonarCloudAnalyze@1
+
+  # Publish Sonar Cloud Report 
+  - task: SonarCloudPublish@1
+    inputs:
+      pollingTimeoutSec: '300'
+
+  # Pack
+  - task: DotNetCoreCLI@2
+    displayName: "Pack"
+    inputs:
+      command: 'pack'
+      feedsToUse: 'select'
+      arguments: '--configuration $(buildConfiguration)'
+      packagesToPack: '$(publishLibrary);$(publishTriggers);$(publishServerlessApi)'
+      vstsFeed: 'fixit-chat-management'
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: BUILD.BUILDNUMBER
+  
+  # Publish to Feed
+  # allowPackageConflicts allows us to build the same version and not throw an error when trying to push, instead it just ingores the latest package unless the version changes
+  # publishVstsFeed is fixit-chat-management Feed
+  # byBuildNumber uses variable 'name'
+  - task: NuGetCommand@2
+    displayName: 'Nuget Push'
+    inputs:
+      command: 'push'
+      feedsToUse: 'select'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: '08d378fd-be72-4c80-9ce4-1a7c754efb98/b57e9c14-0fe0-49e0-8f60-aa8a6c5733e5'
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: BUILD.BUILDNUMBER
+      allowPackageConflicts: true
+
+  # Publish PDBs
+  - task: PublishSymbols@2
+    displayName: 'Publish symbols path'
+    inputs:
+      SearchPattern: '**\bin\**\*.pdb'
+      PublishSymbols: false
+    continueOnError: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      PathtoPublish: '$(build.artifactstagingdirectory)'
+      ArtifactName: 'drop'
