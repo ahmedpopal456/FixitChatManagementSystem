@@ -10,6 +10,7 @@ using Fixit.Core.DataContracts;
 using Microsoft.Extensions.Configuration;
 
 [assembly: InternalsVisibleTo("Fixit.Chat.Management.Lib.UnitTests")]
+[assembly: InternalsVisibleTo("Fixit.Chat.Management.ServerlessApi")]
 [assembly: InternalsVisibleTo("Fixit.Chat.Management.Triggers")]
 namespace Fixit.Chat.Management.Lib.Mediators.Internal
 {
@@ -58,6 +59,37 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       _databaseConversationMessagesTable = databaseMediator.GetDatabase(databaseName).GetContainer(messagesTableName);
     }
 
+    #region ServerlessApi
+    public async Task<GetMessagesResponseDto> GetMessagesAsync(Guid conversationId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      pageNumber = pageNumber == default(int) ? 1 : pageNumber;
+      pageSize = pageSize == default(int) ? 100 : pageSize;
+
+      var messagesResult = default(GetMessagesResponseDto);
+
+      var (messageDocumentCollection, token) = await _databaseConversationMessagesTable.GetItemQueryableAsync<ConversationMessagesDocument>(null, cancellationToken, MessageDocument => MessageDocument.ConversationId == conversationId);
+
+      messagesResult = new GetMessagesResponseDto()
+      {
+        IsOperationSuccessful = messageDocumentCollection.IsOperationSuccessful,
+        OperationException = messageDocumentCollection.OperationException,
+        OperationMessage = messageDocumentCollection.OperationMessage
+      };
+
+      if (messageDocumentCollection.IsOperationSuccessful)
+      {
+        ConversationMessagesDocument messageDocument = messageDocumentCollection.Results.SingleOrDefault();
+        messagesResult.Messages = messageDocument.Messages.TakeLast(pageSize * pageNumber)
+                                                          .SkipLast(pageSize * (pageNumber - 1))
+                                                          .ToList();
+      }
+      return messagesResult;
+    }
+    #endregion
+
+    #region Triggers
     public async Task HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
@@ -83,5 +115,6 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
         }
       }
     }
+    #endregion
   }
 }

@@ -20,9 +20,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Helpers\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Fixit.Chat.Management.Lib\Fixit.Chat.Management.Lib.csproj" />
   </ItemGroup>
 </Project>

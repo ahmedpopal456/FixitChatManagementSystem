@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Mediators.Internal;
@@ -49,6 +51,54 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _conversationsMediator = new ConversationsMediator(_databaseMediator.Object,
                                                          _chatDatabaseName,
                                                          _conversationsDatabaseTableName);
+    }
+    #endregion
+
+    #region GetConversationsAsync
+    [TestMethod]
+    [DataRow("8b418766-4a99-42a8-b6d7-9fe52b88ea93", DisplayName = "Any_UserId")]
+    public async Task GetConversationsAsync_GetConversationFailure_ReturnsFailure(string userId)
+    {
+      //Arrange
+      var cancellationToken = CancellationToken.None;
+      Guid userIdGuid = new Guid(userId);
+      var conversationDocumentCollection = new DocumentCollectionDto<ConversationDocument>()
+      {
+        IsOperationSuccessful = false
+      };
+
+      _conversationsTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationDocument, bool>>>(), null))
+                                       .ReturnsAsync((conversationDocumentCollection, null));
+
+      //Act
+      var actionResult = await _conversationsMediator.GetConversationsAsync(userIdGuid, cancellationToken);
+
+      //Assert
+      Assert.IsFalse(actionResult.IsOperationSuccessful);
+    }
+
+    [TestMethod]
+    [DataRow("8b418766-4a99-42a8-b6d7-9fe52b88ea93", DisplayName = "Any_UserId")]
+    public async Task GetConversationsAsync_GetConversationSuccess_ReturnsSuccess(string userId)
+    {
+      //Arrange
+      var cancellationToken = CancellationToken.None;
+      Guid userIdGuid = new Guid(userId);
+      var conversationDocumentCollection = new DocumentCollectionDto<ConversationDocument>()
+      {
+        Results = new List<ConversationDocument>() { _fakeConversationDocuments.First() },
+        IsOperationSuccessful = true
+      };
+
+      _conversationsTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationDocument, bool>>>(), null))
+                                       .ReturnsAsync((conversationDocumentCollection, null));
+
+      //Act
+      var actionResult = await _conversationsMediator.GetConversationsAsync(userIdGuid, cancellationToken);
+
+      //Assert
+      Assert.IsTrue(actionResult.IsOperationSuccessful);
+      Assert.IsTrue(actionResult.Results.Count > 0);
     }
     #endregion
 

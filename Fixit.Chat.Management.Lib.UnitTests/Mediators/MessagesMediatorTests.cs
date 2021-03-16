@@ -56,6 +56,84 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
     }
     #endregion
 
+    #region GetMessagesAsync
+    [TestMethod]
+    [DataRow("bb84f7d6-7d10-4fd0-85b2-6eba8cc3c896", DisplayName = "Any_ConversationId")]
+    public async Task GetMessagesAsync_GetMessageDocumentFailure_ReturnsFailure(string conversationId)
+    {
+      //Arrange
+      var cancellationToken = CancellationToken.None;
+      Guid conversationIdGuid = new Guid(conversationId);
+      var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
+      {
+        IsOperationSuccessful = false
+      };
+
+      _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
+                                  .ReturnsAsync((messageDocumentCollection, null));
+
+      //Act
+      var actionResult = await _messagesMediator.GetMessagesAsync(conversationIdGuid, 1, 3, cancellationToken);
+
+      //Assert
+      Assert.IsFalse(actionResult.IsOperationSuccessful);
+    }
+
+    [TestMethod]
+    [DataRow(1, 5, DisplayName = "Page1_Size5")]
+    [DataRow(3, 2, DisplayName = "Page3_Size2")]
+    [DataRow(2, 1, DisplayName = "Page2_Size1")]
+    [DataRow(2, 5, DisplayName = "Page2_Size5")]
+    [DataRow(2, 4, DisplayName = "Page2_Size4")]
+    public async Task GetMessagesAsync_GetMessageDocumentSuccess_ReturnsSuccess(int pageNumber, int pageSize) 
+    {
+      //Arrange
+      var cancellationToken = CancellationToken.None;
+      Guid conversationIdGuid = new Guid("bb84f7d6-7d10-4fd0-85b2-6eba8cc3c896");
+      var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
+      {
+        Results = new List<ConversationMessagesDocument>() { _fakeMessageDocuments.Last() },
+        IsOperationSuccessful = true
+      };
+      int messageCount = _fakeMessageDocuments.Last().Messages.Count;
+
+      _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
+                                  .ReturnsAsync((messageDocumentCollection, null));
+
+      //Act
+      var actionResult = await _messagesMediator.GetMessagesAsync(conversationIdGuid, pageNumber, pageSize, cancellationToken);
+
+      //Assert
+      Assert.IsTrue(actionResult.IsOperationSuccessful);
+      Assert.AreEqual(actionResult.Messages.Count, pageNumber * pageSize > messageCount ? messageCount % pageSize : pageSize);
+    }
+
+    [TestMethod]
+    [DataRow(3, 3, DisplayName = "Page3_Size3")]
+    [DataRow(4, 2, DisplayName = "Page4_Size2")]
+    public async Task GetMessagesAsync_GetMessagesPageEmpty_ReturnsEmpty(int pageNumber, int pageSize)
+    {
+      //Arrange
+      var cancellationToken = CancellationToken.None;
+      Guid conversationIdGuid = new Guid("bb84f7d6-7d10-4fd0-85b2-6eba8cc3c896");
+      var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
+      {
+        Results = new List<ConversationMessagesDocument>() { _fakeMessageDocuments.Last() },
+        IsOperationSuccessful = true
+      };
+
+      _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
+                                  .ReturnsAsync((messageDocumentCollection, null));
+
+      //Act
+      var actionResult = await _messagesMediator.GetMessagesAsync(conversationIdGuid, pageNumber, pageSize, cancellationToken);
+
+      //Assert
+      Assert.IsTrue(actionResult.IsOperationSuccessful);
+      Assert.AreEqual(actionResult.Messages.Count, 0);
+    }
+    #endregion
+
     #region HandleMessageAsync
     [TestMethod]
     public async Task HandleMessageAsync_GetMessageDocumentFailure_DoNothing()
