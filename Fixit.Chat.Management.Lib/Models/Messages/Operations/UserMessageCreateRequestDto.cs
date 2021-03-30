@@ -9,7 +9,7 @@ namespace Fixit.Chat.Management.Lib.Models.Messages.Operations
   {
     public Guid ConversationId { get; set; }
 
-    public Guid ReceiverUserId { get; set; }
+    public UserSummaryDto Recipient { get; set; }
 
     public MessageDto Message { get; set; }
 
@@ -19,7 +19,12 @@ namespace Fixit.Chat.Management.Lib.Models.Messages.Operations
       UserMessageCreateRequestDto firstMessageCreateRequestDto = new UserMessageCreateRequestDto
       {
         ConversationId = new Guid("3265a8a0-5d73-497c-b3ae-a914259f3800"),
-        ReceiverUserId = new Guid("c068fbd8-1c6e-4e78-b51b-2f52048e0518"),
+        Recipient = new UserSummaryDto()
+        {
+          Id = new Guid("c068fbd8-1c6e-4e78-b51b-2f52048e0518"),
+          FirstName = "Mary",
+          LastName = "Sue",
+        },
         Message = new MessageDto()
         {
           Id = Guid.NewGuid(),
@@ -39,7 +44,12 @@ namespace Fixit.Chat.Management.Lib.Models.Messages.Operations
       UserMessageCreateRequestDto secondMessageCreateRequestDto = new UserMessageCreateRequestDto
       {
         ConversationId = new Guid("3265a8a0-5d73-497c-b3ae-a914259f3800"),
-        ReceiverUserId = new Guid("8b418766-4a99-42a8-b6d7-9fe52b88ea93"),
+        Recipient = new UserSummaryDto()
+        {
+          Id = new Guid("8b418766-4a99-42a8-b6d7-9fe52b88ea93"),
+          FirstName = "Mike",
+          LastName = "Kunk",
+        },
         Message = new MessageDto()
         {
           Id = Guid.NewGuid(),

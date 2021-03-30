@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.Serve
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.Triggers", "Fixit.Chat.Management.Triggers\Fixit.Chat.Management.Triggers.csproj", "{C2137E94-0B88-4941-948E-D51F9F6AB987}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fixit.Chat.Management.Lib.UnitTests", "Fixit.Chat.Management.Lib.UnitTests\Fixit.Chat.Management.Lib.UnitTests.csproj", "{022D5B9A-B27E-4F22-8F35-A953B0FD702B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixit.Chat.Management.Lib.UnitTests", "Fixit.Chat.Management.Lib.UnitTests\Fixit.Chat.Management.Lib.UnitTests.csproj", "{022D5B9A-B27E-4F22-8F35-A953B0FD702B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

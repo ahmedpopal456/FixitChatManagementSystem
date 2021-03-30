@@ -44,7 +44,7 @@ namespace Fixit.Chat.Management.Triggers.Helpers
         if (createUserMessageDeserialized != null)
         {
           isValid = !createUserMessageDeserialized.ConversationId.Equals(Guid.Empty)
-                 && !createUserMessageDeserialized.ReceiverUserId.Equals(Guid.Empty)
+                 && createUserMessageDeserialized.Recipient != null
                  && createUserMessageDeserialized.Message != null
                  && !string.IsNullOrWhiteSpace(createUserMessageDeserialized.Message.Message);
 

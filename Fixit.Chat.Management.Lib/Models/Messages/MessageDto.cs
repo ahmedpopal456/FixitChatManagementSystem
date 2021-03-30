@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using Fixit.Chat.Management.Lib.Models.Messages.Enums;
+using Fixit.Core.DataContracts.Chat.Enums;
 using Fixit.Core.DataContracts.Users;
 
 namespace Fixit.Chat.Management.Lib.Models.Messages

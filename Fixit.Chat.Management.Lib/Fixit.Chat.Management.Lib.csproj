@@ -5,8 +5,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
-    <PackageReference Include="Fixit.Core.Database" Version="1.0.78-beta" />
-    <PackageReference Include="Fixit.Core.DataContracts" Version="1.0.149-beta" />
+    <PackageReference Include="Fixit.Core.Database" Version="1.0.26-alpha" />
+    <PackageReference Include="Fixit.Core.DataContracts" Version="1.0.80-alpha" />
+    <PackageReference Include="Fixit.Core.Networking" Version="1.0.0-1120-3" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
   </ItemGroup>

@@ -1,6 +1,10 @@
-﻿using Fixit.Chat.Management.Lib.Seeders;
+﻿using AutoMapper;
+using Fixit.Chat.Management.Lib.Helpers;
+using Fixit.Chat.Management.Lib.Mappers;
+using Fixit.Chat.Management.Lib.Seeders;
 using Fixit.Core.Database.Mediators;
 using Fixit.Core.DataContracts.Seeders;
+using Fixit.Core.Networking.Local.NMS;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -20,6 +24,18 @@ namespace Fixit.Chat.Management.Lib.UnitTests
     protected Mock<IDatabaseTableMediator> _databaseTableMediator;
     protected Mock<IDatabaseTableEntityMediator> _conversationsTableEntityMediator;
     protected Mock<IDatabaseTableEntityMediator> _messagesTableEntityMediator;
+
+    // Networking System Mocks
+    protected Mock<IFixNmsHttpClient> _nmsHttpClient;
+
+    // Helper Classes Mocks
+    protected Mock<IChatNotificationFactory> _chatNotificationFactory;
+
+    // Mapper
+    protected MapperConfiguration _mapperConfiguration = new MapperConfiguration(config =>
+    {
+      config.AddProfile(new ChatManagementMapper());
+    });
 
     public TestBase()
     {

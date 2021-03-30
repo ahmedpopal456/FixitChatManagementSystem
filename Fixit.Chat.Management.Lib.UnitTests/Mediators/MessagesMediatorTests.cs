@@ -10,6 +10,8 @@ using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Core.Database.DataContracts.Documents;
 using Fixit.Core.Database.Mediators;
 using Fixit.Core.DataContracts;
+using Fixit.Core.DataContracts.Notifications.Operations;
+using Fixit.Core.Networking.Local.NMS;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -38,8 +40,8 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _configuration = new Mock<IConfiguration>();
       _databaseMediator = new Mock<IDatabaseMediator>();
       _databaseTableMediator = new Mock<IDatabaseTableMediator>();
-      _conversationsTableEntityMediator = new Mock<IDatabaseTableEntityMediator>();
       _messagesTableEntityMediator = new Mock<IDatabaseTableEntityMediator>();
+      _nmsHttpClient = new Mock<IFixNmsHttpClient>();
 
       // Create fake data objects
       _fakeMessageDocuments = _fakeDtoSeedFactory.CreateSeederFactory<ConversationMessagesDocument>(new ConversationMessagesDocument());
@@ -48,9 +50,11 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _databaseMediator.Setup(databaseMediator => databaseMediator.GetDatabase(_chatDatabaseName))
                        .Returns(_databaseTableMediator.Object);
       _databaseTableMediator.Setup(databaseTableMediator => databaseTableMediator.GetContainer(_messagesDatabaseTableName))
-                       .Returns(_messagesTableEntityMediator.Object);
+                            .Returns(_messagesTableEntityMediator.Object);
 
-      _messagesMediator = new MessagesMediator(_databaseMediator.Object,
+      _messagesMediator = new MessagesMediator(_mapperConfiguration.CreateMapper(),
+                                               _databaseMediator.Object,
+                                               _nmsHttpClient.Object,
                                                _chatDatabaseName,
                                                _messagesDatabaseTableName);
     }
@@ -141,8 +145,8 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       //Arrange
       var cancellationToken = CancellationToken.None;
       var userMessageCreateRequestDto = _fakeUserMessageCreateRequestDtos.First();
-
       var newMessageDocument = new ConversationMessagesDocument();
+      var operationStatus = new OperationStatus() { IsOperationSuccessful = true };
 
       var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
       {
@@ -151,12 +155,15 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
 
       _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
                                   .ReturnsAsync((messageDocumentCollection, null));
+      _nmsHttpClient.Setup(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(operationStatus);
 
       //Act
       await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
       //Assert
       _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never());
+      _nmsHttpClient.Verify(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()), Times.Never());
     }
 
     [TestMethod]
@@ -165,8 +172,8 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       //Arrange
       var cancellationToken = CancellationToken.None;
       var userMessageCreateRequestDto = _fakeUserMessageCreateRequestDtos.First();
-
       var newMessageDocument = new ConversationMessagesDocument();
+      var operationStatus = new OperationStatus() { IsOperationSuccessful = true };
 
       var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
       {
@@ -174,18 +181,22 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
         Results = null
       };
 
+      var operationStatusSuccess = new OperationStatus() { IsOperationSuccessful = true };
+
       _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
                                   .ReturnsAsync((messageDocumentCollection, null));
-
       _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                                   .Callback<ConversationMessagesDocument, string, CancellationToken>((document, partitionKey, cancellationToken) => newMessageDocument = document)
-                                  .ReturnsAsync(new OperationStatus() { IsOperationSuccessful = true });
+                                  .ReturnsAsync(operationStatusSuccess);
+      _nmsHttpClient.Setup(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(operationStatus);
 
       //Act
       await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
       //Assert
-      _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once()); ;
+      _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());
+      _nmsHttpClient.Verify(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()), Times.Once());
       Assert.AreEqual(newMessageDocument.ConversationId, userMessageCreateRequestDto.ConversationId);
       Assert.AreEqual(newMessageDocument.Messages.Count, 1);
       Assert.IsTrue(newMessageDocument.Messages.Contains(userMessageCreateRequestDto.Message));
@@ -197,8 +208,8 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       //Arrange
       var cancellationToken = CancellationToken.None;
       var userMessageCreateRequestDto = _fakeUserMessageCreateRequestDtos.Last();
-
       var updatedMessageDocument = new ConversationMessagesDocument();
+      var operationStatus = new OperationStatus() { IsOperationSuccessful = true };
 
       var messageDocumentCollection = new DocumentCollectionDto<ConversationMessagesDocument>()
       {
@@ -206,18 +217,22 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
         Results = new List<ConversationMessagesDocument>() { _fakeMessageDocuments.First() }
       };
 
+      var operationStatusSuccess = new OperationStatus() { IsOperationSuccessful = true };
+
       _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.GetItemQueryableAsync(null, It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<ConversationMessagesDocument, bool>>>(), null))
                                   .ReturnsAsync((messageDocumentCollection, null));
-
       _messagesTableEntityMediator.Setup(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                                   .Callback<ConversationMessagesDocument, string, CancellationToken>((document, partitionKey, cancellationToken) => updatedMessageDocument = document)
-                                  .ReturnsAsync(new OperationStatus() { IsOperationSuccessful = true });
+                                  .ReturnsAsync(operationStatusSuccess);
+      _nmsHttpClient.Setup(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(operationStatus);
 
       //Act
       await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
       //Assert
-      _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once());;
+      _messagesTableEntityMediator.Verify(databaseTableEntityMediator => databaseTableEntityMediator.UpsertItemAsync(It.IsAny<ConversationMessagesDocument>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once()); ;
+      _nmsHttpClient.Verify(httpClient => httpClient.PostNotification(It.IsAny<EnqueueNotificationRequestDto>(), It.IsAny<CancellationToken>()), Times.Once());
       Assert.AreEqual(updatedMessageDocument.Messages.Count, 2);
       Assert.IsTrue(updatedMessageDocument.Messages.Contains(userMessageCreateRequestDto.Message));
     }
@@ -232,6 +247,7 @@ namespace Fixit.Chat.Management.Lib.UnitTests.Mediators
       _databaseMediator.Reset();
       _databaseTableMediator.Reset();
       _messagesTableEntityMediator.Reset();
+      _nmsHttpClient.Reset();
 
       // Clean-up data objects
       _fakeMessageDocuments = null;

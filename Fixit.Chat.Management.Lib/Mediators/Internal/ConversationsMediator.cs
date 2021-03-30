@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Fixit.Chat.Management.Lib.Helpers;
 using Fixit.Chat.Management.Lib.Models;
 using Fixit.Core.Database.DataContracts.Documents;
 using Fixit.Core.Database.Mediators;
 using Fixit.Core.DataContracts.Chat;
+using Fixit.Core.DataContracts.Notifications.Operations;
+using Fixit.Core.Networking.Local.NMS;
 using Microsoft.Extensions.Configuration;
 
 [assembly: InternalsVisibleTo("Fixit.Chat.Management.Lib.UnitTests")]
@@ -17,8 +21,12 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
   internal class ConversationsMediator : IConversationsMediator
   {
     private readonly IDatabaseTableEntityMediator _databaseConversationsTable;
+    private readonly IChatNotificationFactory _chatNotificationFactory;
+    private readonly IFixNmsHttpClient _nmsHttpClient;
 
     public ConversationsMediator(IDatabaseMediator databaseMediator,
+                                 IChatNotificationFactory chatNotificationFactory,
+                                 IFixNmsHttpClient nmsHttpClient,
                                  IConfiguration configurationProvider)
     {
       var databaseName = configurationProvider["FIXIT-CM-DB-NAME"];
@@ -40,9 +48,13 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       }
 
       _databaseConversationsTable = databaseMediator.GetDatabase(databaseName).GetContainer(databaseConversationsTableName);
+      _chatNotificationFactory = chatNotificationFactory ?? throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects a value for {nameof(chatNotificationFactory)}... null argument was provided");
+      _nmsHttpClient = nmsHttpClient ?? throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects a value for {nameof(nmsHttpClient)}... null argument was provided");
     }
 
     public ConversationsMediator(IDatabaseMediator databaseMediator,
+                                 IChatNotificationFactory chatNotificationFactory,
+                                 IFixNmsHttpClient nmsHttpClient,
                                  string databaseName,
                                  string conversationsTableName)
     {
@@ -62,6 +74,8 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       }
 
       _databaseConversationsTable = databaseMediator.GetDatabase(databaseName).GetContainer(conversationsTableName);
+      _chatNotificationFactory = chatNotificationFactory ?? throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects a value for {nameof(chatNotificationFactory)}... null argument was provided");
+      _nmsHttpClient = nmsHttpClient ?? throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects a value for {nameof(nmsHttpClient)}... null argument was provided");
     }
 
     #region ServerlessApi
@@ -89,7 +103,14 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
 
       if (result.IsOperationSuccessful)
       {
-        // TODO: (#502) Notify participants
+        var notificationDtoList = new List<EnqueueNotificationRequestDto>();
+        notificationDtoList.Add(_chatNotificationFactory.CreateClientConversationNotificationDto(result.Document));
+        notificationDtoList.Add(_chatNotificationFactory.CreateCraftsmanConversationNotificationDto(result.Document));
+
+        foreach (EnqueueNotificationRequestDto notificationDto in notificationDtoList)
+        {
+          await _nmsHttpClient.PostNotification(notificationDto, cancellationToken);
+        }
       }
     }
     #endregion
