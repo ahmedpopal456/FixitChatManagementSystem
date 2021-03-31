@@ -5,20 +5,27 @@ using Fixit.Chat.Management.Lib.Mediators;
 using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Chat.Management.Triggers.Helpers;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Logging;
 
 namespace Fixit.Chat.Management.Triggers.Functions
 {
   public class HandleMessage
   {
+    private readonly ILogger _logger;
     private readonly IMessagesMediator _messagesMediator;
+    private readonly IConversationsMediator _conversationsMediator;
 
-    public HandleMessage(IMessagesMediator messagesMediator) : base()
+    public HandleMessage(IMessagesMediator messagesMediator,
+                         IConversationsMediator conversationsMediator,
+                         ILoggerFactory loggerFactory)
     {
+      _logger = loggerFactory.CreateLogger<CreateConversation>();
       _messagesMediator = messagesMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(messagesMediator)}... null argument was provided");
+      _conversationsMediator = conversationsMediator ?? throw new ArgumentNullException($"{nameof(CreateConversation)} expects a value for {nameof(conversationsMediator)}... null argument was provided");
     }
 
-    [FunctionName("HandleMessage")]
-    public async Task Run([QueueTrigger("handlesendtouserqueue")] string queueItem, CancellationToken cancellationToken)
+    [FunctionName(nameof(HandleMessage))]
+    public async Task Run([QueueTrigger("%FIXIT-CMS-MESSAGESQUEUE-NAME%")] string queueItem, CancellationToken cancellationToken)
     {
       await HandleMessageAsync(queueItem, cancellationToken);
     }
@@ -32,7 +39,21 @@ namespace Fixit.Chat.Management.Triggers.Functions
         return;
       }
 
-      await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
+      var result = await _messagesMediator.HandleMessageAsync(userMessageCreateRequestDto, cancellationToken);
+      if (!result.IsOperationSuccessful)
+      {
+        var errorMessage = $"{nameof(HandleMessage)} failed to update conversation messages id {userMessageCreateRequestDto.ConversationId} with new message id {userMessageCreateRequestDto.Message.Id}";
+        _logger.LogError(errorMessage);
+        throw new ArgumentException(errorMessage);
+      }
+      var updateResult = await _conversationsMediator.UpdateLastMessageAsync(userMessageCreateRequestDto, cancellationToken);
+
+      if (!updateResult.IsOperationSuccessful)
+      {
+        var errorMessage = $"{nameof(HandleMessage)} failed to update conversation id {userMessageCreateRequestDto.ConversationId} with latest message id {userMessageCreateRequestDto.Message.Id}";
+        _logger.LogError(errorMessage);
+        throw new ArgumentException(errorMessage);
+      }
     }
   }
 }

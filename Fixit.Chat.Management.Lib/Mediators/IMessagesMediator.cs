@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Models.Messages;
 using Fixit.Chat.Management.Lib.Models.Messages.Operations;
+using Fixit.Core.DataContracts;
 
 namespace Fixit.Chat.Management.Lib.Mediators
 {
@@ -27,7 +28,7 @@ namespace Fixit.Chat.Management.Lib.Mediators
     /// <param name="userMessageCreateRequestDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken);
+    Task<OperationStatus> HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken);
     #endregion
   }
 }

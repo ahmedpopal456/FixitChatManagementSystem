@@ -2,7 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Models;
+using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Core.Database.DataContracts.Documents;
+using Fixit.Core.DataContracts;
 using Fixit.Core.DataContracts.Chat;
 
 namespace Fixit.Chat.Management.Lib.Mediators
@@ -26,7 +28,15 @@ namespace Fixit.Chat.Management.Lib.Mediators
     /// <param name="conversationCreateRequestDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task CreateConversationAsync(ConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken);
+    Task<CreateDocumentDto<ConversationDocument>> CreateConversationAsync(ConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Updates the last message in the conversation document
+    /// </summary>
+    /// <param name="userMessageCreateRequestDto"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<OperationStatus> UpdateLastMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken);
     #endregion
   }
 }

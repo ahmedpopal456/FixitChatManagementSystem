@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Fixit.Core.Database;
@@ -17,8 +16,9 @@ namespace Fixit.Chat.Management.ServerlessApi
       IConfiguration configuration = (IConfiguration)builder.Services.BuildServiceProvider()
                                                        .GetService(typeof(IConfiguration));
 
-      DatabaseFactory databaseFactory = new DatabaseFactory(configuration["FIXIT-CM-DB-EP"], configuration["FIXIT-CM-DB-KEY"]);
+      DatabaseFactory databaseFactory = new DatabaseFactory(configuration["FIXIT-CMS-DB-EP"], configuration["FIXIT-CMS-DB-KEY"]);
       builder.Services.AddSingleton<IDatabaseMediator>(databaseFactory.CreateCosmosClient());
+
       builder.AddFixitChatServices();
     }
   }

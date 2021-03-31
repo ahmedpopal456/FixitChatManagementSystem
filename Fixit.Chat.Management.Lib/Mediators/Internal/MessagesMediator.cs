@@ -28,12 +28,12 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
                             IFixNmsHttpClient nmsHttpClient,
                             IConfiguration configurationProvider)
     {
-      var databaseName = configurationProvider["FIXIT-CM-DB-NAME"];
-      var databaseMessagesTableName = configurationProvider["FIXIT-CM-DB-MESSAGESTABLE"];
+      var databaseName = configurationProvider["FIXIT-CMS-DB-NAME"];
+      var databaseMessagesTableName = configurationProvider["FIXIT-CMS-DB-MESSAGESTABLE"];
 
       if (string.IsNullOrWhiteSpace(databaseName))
       {
-        throw new ArgumentNullException($"{nameof(MessagesMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Database as {{FIXIT-CM-DB-NAME}} ");
+        throw new ArgumentNullException($"{nameof(MessagesMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Database as {{FIXIT-CMS-DB-NAME}} ");
       }
 
       if (databaseMediator == null)
@@ -103,10 +103,10 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
     #endregion
 
     #region Triggers
-    public async Task HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken)
+    public async Task<OperationStatus> HandleMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
-      OperationStatus result;
+      OperationStatus result = new OperationStatus();
 
       var (messageDocumentCollection, token) = await _databaseConversationMessagesTable.GetItemQueryableAsync<ConversationMessagesDocument>(null, cancellationToken, messageDocument => messageDocument.ConversationId == userMessageCreateRequestDto.ConversationId);
       if (messageDocumentCollection.IsOperationSuccessful)
@@ -128,6 +128,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
           await _nmsHttpClient.PostNotification(notificationDto, cancellationToken);
         }
       }
+      return result;
     }
     #endregion
   }

@@ -6,8 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Helpers;
 using Fixit.Chat.Management.Lib.Models;
+using Fixit.Chat.Management.Lib.Models.Messages.Operations;
 using Fixit.Core.Database.DataContracts.Documents;
 using Fixit.Core.Database.Mediators;
+using Fixit.Core.DataContracts;
 using Fixit.Core.DataContracts.Chat;
 using Fixit.Core.DataContracts.Notifications.Operations;
 using Fixit.Core.Networking.Local.NMS;
@@ -29,17 +31,17 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
                                  IFixNmsHttpClient nmsHttpClient,
                                  IConfiguration configurationProvider)
     {
-      var databaseName = configurationProvider["FIXIT-CM-DB-NAME"];
-      var databaseConversationsTableName = configurationProvider["FIXIT-CM-DB-CONVERSATIONSTABLE"];
+      var databaseName = configurationProvider["FIXIT-CMS-DB-NAME"];
+      var databaseConversationsTableName = configurationProvider["FIXIT-CMS-DB-CONVERSATIONSTABLE"];
 
       if (string.IsNullOrWhiteSpace(databaseName))
       {
-        throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Database as {{FIXIT-CM-DB-NAME}} ");
+        throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Database as {{FIXIT-CMS-DB-NAME}} ");
       }
 
       if (string.IsNullOrWhiteSpace(databaseConversationsTableName))
       {
-        throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Conversations Table as {{FIXIT-CM-DB-CONVERSATIONSTABLE}} ");
+        throw new ArgumentNullException($"{nameof(ConversationsMediator)} expects the {nameof(configurationProvider)} to have defined the Chat Management Conversations Table as {{FIXIT-CMS-DB-CONVERSATIONSTABLE}} ");
       }
 
       if (databaseMediator == null)
@@ -89,7 +91,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
     #endregion
 
     #region Triggers
-    public async Task CreateConversationAsync(ConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken)
+    public async Task<CreateDocumentDto<ConversationDocument>> CreateConversationAsync(ConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();
 
@@ -112,6 +114,22 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
           await _nmsHttpClient.PostNotification(notificationDto, cancellationToken);
         }
       }
+      return result;
+    }
+
+    public async Task<OperationStatus> UpdateLastMessageAsync(UserMessageCreateRequestDto userMessageCreateRequestDto, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      var result = new OperationStatus();
+      var (conversationDocumentCollection, token ) = await _databaseConversationsTable.GetItemQueryableAsync<ConversationDocument>(null, cancellationToken, document => document.id.Equals(userMessageCreateRequestDto.ConversationId.ToString()));
+      var conversationDocument = conversationDocumentCollection.Results.FirstOrDefault();
+      if (conversationDocument != null && (conversationDocument.LastMessage == null || conversationDocument.LastMessage.CreatedTimestampsUtc < userMessageCreateRequestDto.Message.CreatedTimestampsUtc))
+      {
+        conversationDocument.LastMessage = userMessageCreateRequestDto.Message;
+        result = await _databaseConversationsTable.UpsertItemAsync(conversationDocument, conversationDocument.EntityId, cancellationToken);
+      }
+      return result;
     }
     #endregion
   }
