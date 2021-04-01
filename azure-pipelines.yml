@@ -200,6 +200,27 @@ jobs:
       PublishSymbols: false
     continueOnError: true
 
+  # Publish projects
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish projects'
+    inputs:
+      command: 'publish'
+      projects: |
+        $(publishLibrary)
+        $(publishServerlessApi)
+        $(publishTriggers)
+      publishWebProjects: false
+      arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
+      zipAfterPublish: true
+
+  # Publish Terraform configuration
+  - task: CopyFiles@2
+    displayName: 'Publish Terraform configuration'
+    inputs:
+      SourceFolder: '.devops/terraform'
+      Contents: '**'
+      TargetFolder: '$(build.artifactstagingdirectory)/terraform'
+
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifact'
     inputs:
