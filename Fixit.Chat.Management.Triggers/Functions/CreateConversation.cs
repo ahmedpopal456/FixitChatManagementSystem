@@ -22,7 +22,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
     }
 
     [FunctionName(nameof(CreateConversation))]
-    public async Task Run([QueueTrigger("%FIXIT-CMS-CONVERSATIONSQUEUE-NAME%")]string queueItem, CancellationToken cancellationToken)
+    public async Task Run([QueueTrigger("FIXIT-CMS-CONVERSATIONSQUEUE-NAME", Connection = "FIXIT-CMS-STORAGEACCOUNT-CS")]string queueItem, CancellationToken cancellationToken)
     {
       await CreateConversationAsync(queueItem, cancellationToken);
     }

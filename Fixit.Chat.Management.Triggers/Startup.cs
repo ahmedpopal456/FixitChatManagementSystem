@@ -24,6 +24,8 @@ namespace Fixit.Chat.Management.Triggers
       StorageFactory storageFactory = new StorageFactory(configuration["FIXIT-CMS-STORAGEACCOUNT-CS"]);
       builder.Services.AddSingleton<IQueueServiceClientMediator>(storageFactory.CreateQueueServiceClientMediator());
 
+      builder.Services.AddSignalR();
+
       builder.Services.AddLogging();
       builder.AddFixitChatServices();
     }
