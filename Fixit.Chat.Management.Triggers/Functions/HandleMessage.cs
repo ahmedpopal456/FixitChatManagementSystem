@@ -44,15 +44,15 @@ namespace Fixit.Chat.Management.Triggers.Functions
       {
         var errorMessage = $"{nameof(HandleMessage)} failed to update conversation messages id {userMessageCreateRequestDto.ConversationId} with new message id {userMessageCreateRequestDto.Message.Id}";
         _logger.LogError(errorMessage);
-        throw new ArgumentException(errorMessage);
+        throw new InvalidOperationException(errorMessage);
       }
       var updateResult = await _conversationsMediator.UpdateLastMessageAsync(userMessageCreateRequestDto, cancellationToken);
 
-      if (!updateResult.IsOperationSuccessful)
+      if (updateResult.OperationException != null)
       {
         var errorMessage = $"{nameof(HandleMessage)} failed to update conversation id {userMessageCreateRequestDto.ConversationId} with latest message id {userMessageCreateRequestDto.Message.Id}";
         _logger.LogError(errorMessage);
-        throw new ArgumentException(errorMessage);
+        throw new InvalidOperationException(errorMessage);
       }
     }
   }
