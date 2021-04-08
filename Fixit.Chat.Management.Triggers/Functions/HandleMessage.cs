@@ -25,7 +25,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
     }
 
     [FunctionName(nameof(HandleMessage))]
-    public async Task Run([QueueTrigger("FIXIT-CMS-MESSAGESQUEUE-NAME", Connection = "FIXIT-CMS-STORAGEACCOUNT-CS")] string queueItem, CancellationToken cancellationToken)
+    public async Task Run([QueueTrigger("handlesendtouserqueue", Connection = "FIXIT-CMS-STORAGEACCOUNT-CS")] string queueItem, CancellationToken cancellationToken)
     {
       await HandleMessageAsync(queueItem, cancellationToken);
     }
