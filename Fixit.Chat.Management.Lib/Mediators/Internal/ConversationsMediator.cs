@@ -86,6 +86,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       cancellationToken.ThrowIfCancellationRequested();
 
       var (conversationDocumentCollection, token) = await _databaseConversationsTable.GetItemQueryableAsync<ConversationDocument>(null, cancellationToken, conversationDocument => conversationDocument.Participants.Count(participant => participant.User.Id == userId) == 1);
+      conversationDocumentCollection.Results = conversationDocumentCollection.Results.OrderByDescending(document => document.UpdatedTimestampsUtc).ToList();
       return conversationDocumentCollection;
     }
     #endregion
@@ -98,6 +99,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       ConversationDocument conversationDocument = new ConversationDocument() { FixInstanceId = conversationCreateRequestDto.FixInstanceId };
       var currentTime = DateTimeOffset.UtcNow;
       conversationDocument.CreatedTimestampsUtc = currentTime.ToUnixTimeSeconds();
+      conversationDocument.UpdatedTimestampsUtc = currentTime.ToUnixTimeSeconds();
       conversationDocument.Participants = conversationCreateRequestDto.Participants.Select(user => new ParticipantDto() { User = user, CreatedTimestampsUtc = currentTime.ToUnixTimeSeconds() })
                                                                                    .ToList();
 
@@ -127,6 +129,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Internal
       if (conversationDocument != null && (conversationDocument.LastMessage == null || conversationDocument.LastMessage.CreatedTimestampsUtc < userMessageCreateRequestDto.Message.CreatedTimestampsUtc))
       {
         conversationDocument.LastMessage = userMessageCreateRequestDto.Message;
+        conversationDocument.UpdatedTimestampsUtc = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         result = await _databaseConversationsTable.UpsertItemAsync(conversationDocument, conversationDocument.EntityId, cancellationToken);
       }
       return result;
