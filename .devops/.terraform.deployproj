@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>0a770bff-b457-4ec4-b297-c3fd8d80efca</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PrepareForBuildDependsOn>
+    </PrepareForBuildDependsOn>
+  </PropertyGroup>
+  <Import Condition=" Exists('Deployment.targets') " Project="Deployment.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- vertag<:>start tokens<:>maj.min -->
+  <Import Condition=" Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets') " Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets" />
+  <!-- vertag<:>end -->
+  <ItemGroup>
+    <None Include="backend.tf" />
+    <None Include="dependencies.tf" />
+    <None Include="Deployment.targets">
+      <Visible>False</Visible>
+    </None>
+    <None Include="main.tf" />
+    <None Include="outputs.tf" />
+    <None Include="providers.tf" />
+    <None Include="variables.tf" />
+    <None Include="variables\local.tfvars" />
+    <None Include="variables\dev.tfvars" />
+    <None Include="variables\prod.tfvars" />
+    <None Include="variables\stage.tfvars" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fixit.Chat.Management.Lib\Fixit.Chat.Management.Lib.csproj">
+      <Targets>Build;Package</Targets>
+      <AdditionalProperties>PackageLocation=..\.devops\$(ProjectReferencesOutputPath)\Fixit.Chat.Management.Lib\package.zip</AdditionalProperties>
+      <IncludeFilePath>$(ProjectReferencesOutputPath)\Fixit.Chat.Management.Lib\package.zip</IncludeFilePath>
+    </ProjectReference>
+  </ItemGroup>
+  <Target Name="GetReferenceAssemblyPaths" />
+</Project>

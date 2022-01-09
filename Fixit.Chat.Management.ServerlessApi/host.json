@@ -1,11 +1,25 @@
 {
-    "version": "2.0",
-    "logging": {
-        "applicationInsights": {
-            "samplingExcludedTypes": "Request",
-            "samplingSettings": {
-                "isEnabled": true
-            }
-        }
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
     }
+  },
+  "openApi": {
+    "info": {
+      "version": "3.0.0",
+      "title": "Chat Management Service",
+      "description": "Fixit's Client Management Service, using Open API specification - from **host.json**.",
+      "contact": {
+        "name": "Ahmed Popal",
+      },
+      "license": {
+        "name": "MIT",
+        "url": "http://opensource.org/licenses/MIT"
+      }
+    }
+  }
 }

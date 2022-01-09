@@ -24,6 +24,8 @@ variables:
 jobs:
 # master branch versioning
 - job: Build_Master_Version_Number
+  pool:
+    vmImage: 'ubuntu-latest'
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
   variables:
     masterMajorMinor: $(majorProductVersion).$(minorProductVersion)
@@ -35,6 +37,8 @@ jobs:
 
 # staging branch versioning
 - job: Build_Staging_Version_Number
+  pool:
+    vmImage: 'ubuntu-latest'
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/staging')
   variables:
     stagingMajorMinor: $(majorProductVersion).$(minorProductVersion)-beta
@@ -46,6 +50,8 @@ jobs:
 
 # development branch versioning
 - job: Build_Development_Version_Number
+  pool:
+    vmImage: 'ubuntu-latest'
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
   variables:
     stagingMajorMinor: $(majorProductVersion).$(minorProductVersion)-alpha
@@ -57,6 +63,8 @@ jobs:
 
 # PR versioning for master branch, staging branch & development branch
 - job: Build_PullRequest_Version_Number
+  pool:
+    vmImage: 'ubuntu-latest'
   condition: and(ne(variables['Build.SourceBranch'], 'refs/heads/master'), ne(variables['Build.SourceBranch'], 'refs/heads/staging'), ne(variables['Build.SourceBranch'], 'refs/heads/development'), eq(variables['Build.Reason'], 'PullRequest'))
   variables:
     pullRequestMajorMinor: $(majorProductVersion).$(minorProductVersion)-pre-alpha$(variables['system.pullrequest.pullrequestid'])
@@ -68,6 +76,8 @@ jobs:
 
 # Name branch prefix to build version (master branch, staging branch & development branch)
 - job: Build_Branch_Version_Number
+  pool:
+    vmImage: 'ubuntu-latest'
   condition: and(ne(variables['Build.SourceBranch'], 'refs/heads/master'), ne(variables['Build.SourceBranch'], 'refs/heads/staging'), ne(variables['Build.SourceBranch'], 'refs/heads/development'), ne(variables['Build.Reason'], 'PullRequest'))
   variables:
     branchMajorMinor: $(majorProductVersion).$(minorProductVersion)-br$(variables['build.sourcebranch'])
@@ -134,28 +144,6 @@ jobs:
       projects: '$(buildProjects)'
       arguments: '--configuration $(buildConfiguration) --no-restore'
   
-  # Tests
-  - task: DotNetCoreCLI@2
-    displayName: Test
-    inputs:
-      command: 'test'
-      testRunTitle: 'Fixit Chat Unit Tests'
-      projects: '**/*.UnitTests.csproj'
-      arguments: '--configuration $(BuildConfiguration) /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
-      nobuild: true
-
-  - script: |
-      dotnet tool install -g dotnet-reportgenerator-globaltool --version 4.8.4 --ignore-failed-sources
-      reportgenerator "-reports:$(Build.SourcesDirectory)/**/coverage.opencover.xml" "-targetdir:$(Build.SourcesDirectory)/CodeCoverage" "-reporttypes:HtmlInline_AzurePipelines;Cobertura"
-    displayName: Create Code coverage report
-
-  - task: PublishCodeCoverageResults@1
-    displayName: 'Publish code coverage'
-    inputs:
-      codeCoverageTool: Cobertura
-      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
-      reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'     
-  
   # Run Sonar Cloud Analysis
   - task: SonarCloudAnalyze@1
 
@@ -164,35 +152,7 @@ jobs:
     inputs:
       pollingTimeoutSec: '300'
 
-  # Pack
-  - task: DotNetCoreCLI@2
-    displayName: "Pack"
-    inputs:
-      command: 'pack'
-      feedsToUse: 'select'
-      arguments: '--configuration $(buildConfiguration)'
-      packagesToPack: '$(publishLibrary);$(publishTriggers);$(publishServerlessApi)'
-      vstsFeed: 'fixit-chat-management'
-      versioningScheme: 'byEnvVar'
-      versionEnvVar: BUILD.BUILDNUMBER
-  
-  # Publish to Feed
-  # allowPackageConflicts allows us to build the same version and not throw an error when trying to push, instead it just ingores the latest package unless the version changes
-  # publishVstsFeed is fixit-chat-management Feed
-  # byBuildNumber uses variable 'name'
-  - task: NuGetCommand@2
-    displayName: 'Nuget Push'
-    inputs:
-      command: 'push'
-      feedsToUse: 'select'
-      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
-      nuGetFeedType: 'internal'
-      publishVstsFeed: '08d378fd-be72-4c80-9ce4-1a7c754efb98/b57e9c14-0fe0-49e0-8f60-aa8a6c5733e5'
-      versioningScheme: 'byEnvVar'
-      versionEnvVar: BUILD.BUILDNUMBER
-      allowPackageConflicts: true
-
-  # Publish PDBs
+  #Publish PDBs
   - task: PublishSymbols@2
     displayName: 'Publish symbols path'
     inputs:
@@ -217,7 +177,7 @@ jobs:
   - task: CopyFiles@2
     displayName: 'Publish Terraform configuration'
     inputs:
-      SourceFolder: '.devops/terraform'
+      SourceFolder: '.devops'
       Contents: '**'
       TargetFolder: '$(build.artifactstagingdirectory)/terraform'
 

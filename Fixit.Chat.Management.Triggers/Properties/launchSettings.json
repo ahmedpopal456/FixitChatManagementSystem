@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Fixit.Chat.Management.Triggers": {
+      "commandName": "Project",
+      "commandLineArgs": "host start --port 7073"
+    }
+  }
+}
