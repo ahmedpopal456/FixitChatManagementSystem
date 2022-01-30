@@ -35,42 +35,6 @@ namespace Fixit.Chat.Management.Triggers.Mediators.Internal
       _configuration = configuration ?? throw new ArgumentNullException($"{nameof(ConversationTriggersMediator)} expects an argument for {nameof(configuration)}. Null argument was provided.");
     }
 
-    public async Task<OperationStatusWithObject<ConversationDto>> CreateFixConversationAsync(FixConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken)
-    {
-      cancellationToken.ThrowIfCancellationRequested();
-
-      var conversationDocumentToCreate = new ConversationDocument();
-
-      conversationDocumentToCreate.Details = conversationCreateRequestDto.Details;
-      conversationDocumentToCreate.StampAllTimestampUtc();
-
-      List<Task> searchParticipants = new List<Task>();
-
-      foreach (var participant in conversationCreateRequestDto.Participants)
-      {
-        searchParticipants.Add(Task.Run(async () =>
-        {
-          conversationDocumentToCreate.Participants ??= new List<ParticipantDto>();
-          conversationDocumentToCreate.Participants.Add(new ParticipantDto()
-          {
-            User = _mapper.Map<UserSummaryDto, UserBaseDto>(participant)
-          });
-        }));
-      }
-
-      await Task.WhenAll(searchParticipants);
-
-      conversationDocumentToCreate.id = conversationCreateRequestDto.FixInstanceId.ToString(); 
-      var conversationCreateDocumentDto = await _conversationsTableManager.CreateItemAsync<ConversationDocument>(conversationDocumentToCreate, conversationDocumentToCreate.EntityId, cancellationToken);
-      var result = _mapper.Map<CreateDocumentDto<ConversationDocument>, OperationStatusWithObject<ConversationDto>>(conversationCreateDocumentDto);
-      if (result.IsOperationSuccessful)
-      {
-        result.Result = _mapper.Map<ConversationDocument, ConversationDto>(conversationDocumentToCreate);
-      }
-
-      return result;
-    }
-
     public async Task<OperationStatusWithObject<ConversationDto>> AddConversationParticipantsByBulkIdAsync(AddConversationParticipantsRequestDto addConversationParticipantsRequestDto, CancellationToken cancellationToken)
     {
       cancellationToken.ThrowIfCancellationRequested();

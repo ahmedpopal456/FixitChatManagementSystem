@@ -31,16 +31,16 @@ namespace Fixit.Chat.Management.Triggers.Functions
     {
       cancellationToken.ThrowIfCancellationRequested();
       
-      var createConversationDeserialized = JsonConvert.DeserializeObject<FixConversationCreateRequestDto>(queueItem);
-      if (createConversationDeserialized != null)
+      var createConversationDeserialized = JsonConvert.DeserializeObject<ConversationCreateRequestDto>(queueItem);
+      if (createConversationDeserialized is { Details: { Id: var fixInstanceId } })
       {
-        var isValid = !createConversationDeserialized.FixInstanceId.Equals(Guid.Empty) && createConversationDeserialized.Participants != null && createConversationDeserialized.Participants.Count > default(int);
+        var isValid = !fixInstanceId.Equals(Guid.Empty) && createConversationDeserialized.Participants != null && createConversationDeserialized.Participants.Count > default(int);
         if (isValid)
         {
-          var createResult = await _conversationsMediator.CreateFixConversationAsync(createConversationDeserialized, cancellationToken);
+          var createResult = await _conversationsMediator.CreateConversationAsync(createConversationDeserialized, cancellationToken);
           if (!createResult.IsOperationSuccessful)
           {
-            var errorMessage = $"{nameof(CreateFixConversation)} failed to create new conversation for fix instance with id {createConversationDeserialized.FixInstanceId}";
+            var errorMessage = $"{nameof(CreateFixConversation)} failed to create new conversation for fix instance with id {fixInstanceId}";
             _logger.LogError(errorMessage);
             throw new ArgumentException(errorMessage);
           }

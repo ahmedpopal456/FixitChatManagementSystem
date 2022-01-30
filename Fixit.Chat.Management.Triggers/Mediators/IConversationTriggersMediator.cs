@@ -27,13 +27,5 @@ namespace Fixit.Chat.Management.Triggers.Mediators
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<OperationStatusWithObject<ConversationDto>> UpdateConversationLastMessageAsync(Guid conversationId, ConversationMessageDto lastMessage, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="conversationCreateRequestDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<OperationStatusWithObject<ConversationDto>> CreateFixConversationAsync(FixConversationCreateRequestDto conversationCreateRequestDto, CancellationToken cancellationToken);
   }
 }
