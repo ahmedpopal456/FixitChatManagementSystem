@@ -126,6 +126,7 @@ jobs:
 
   # Prepare Sonar Cloud Analysis
   - task: SonarCloudPrepare@1
+    continueOnError: true
     inputs:
       SonarCloud: 'fixit-sonarcloud'
       organization: 'fixit'
@@ -146,9 +147,11 @@ jobs:
   
   # Run Sonar Cloud Analysis
   - task: SonarCloudAnalyze@1
+    continueOnError: true
 
   # Publish Sonar Cloud Report 
   - task: SonarCloudPublish@1
+    continueOnError: true
     inputs:
       pollingTimeoutSec: '300'
 
