@@ -95,6 +95,7 @@ namespace Fixit.Chat.Management.Lib.Mediators.Conversations.Internal
 
       await Task.WhenAll(searchParticipants);
 
+      conversationDocumentToCreate.EntityId = $"{DateTime.UtcNow.Month}/{DateTime.UtcNow.Year}";
       var conversationCreateDocumentDto = await _conversationsTableManager.CreateItemAsync<ConversationDocument>(conversationDocumentToCreate, conversationDocumentToCreate.EntityId, cancellationToken);
       var result = _mapper.Map<CreateDocumentDto<ConversationDocument>, OperationStatusWithObject<ConversationDto>>(conversationCreateDocumentDto);
       if (result.IsOperationSuccessful)
