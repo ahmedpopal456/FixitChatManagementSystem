@@ -18,22 +18,70 @@ using Fixit.Chat.Management.Lib.Mediators.Conversations.Internal;
 using Fixit.Chat.Management.Lib.Facades;
 using Fixit.Chat.Management.Lib.Extensions;
 using Fixit.Chat.Management.Lib;
-using Fixit.Core.Database.DataContracts.Documents;
+using Fixit.Core.DataContracts.Chat.Operations.Messages;
+using Fixit.Core.DataContracts.Notifications.Payloads;
+using Fixit.Core.DataContracts.Notifications.Enums;
+using Fixit.Core.DataContracts.Chat.Notifications;
+using Fixit.Core.DataContracts.Notifications.Operations;
+using Fixit.Core.Networking.Local.NMS;
 
 namespace Fixit.Chat.Management.Triggers.Mediators.Internal
 {
   internal class ConversationTriggersMediator : ConversationBaseMediator, IConversationTriggersMediator
   {
     private readonly IConfiguration _configuration;
+    private readonly IFixNmsHttpClient _fixNmsHttpClient;
 
     public ConversationTriggersMediator(IConfiguration configuration,
                                         ILoggerFactory loggerFactory,
                                         IFixitFacadeFactory empowerFacadeFactory,
+                                        IFixNmsHttpClient fixNmsHttpClient, 
                                         IMapper mapper,
     DocumentDbTableEntityResolver documentDbTableEntityResolver) : base(configuration, loggerFactory, empowerFacadeFactory, mapper, documentDbTableEntityResolver)
     {
       _configuration = configuration ?? throw new ArgumentNullException($"{nameof(ConversationTriggersMediator)} expects an argument for {nameof(configuration)}. Null argument was provided.");
+      _fixNmsHttpClient = fixNmsHttpClient ?? throw new ArgumentNullException($"{nameof(ConversationTriggersMediator)} expects an argument for {nameof(fixNmsHttpClient)}. Null argument was provided.");
     }
+
+    public async Task<OperationStatus> EnqueueNotificationForConversationLastMessageAsync(ChatMessageGroupSendMessage chatMessageGroupSendMessage, CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      var result = new OperationStatus();
+
+      var conversation = chatMessageGroupSendMessage.Conversation;
+      var users = conversation.Participants.Select(participant => participant.User);
+
+      var sentByUser = users?.Where(user => user.Id == chatMessageGroupSendMessage.SentByUserId)?.FirstOrDefault();
+      if (sentByUser is { })
+      {
+        var usersList = users.ToList();
+        usersList.Remove(sentByUser);
+
+        var conversationName = conversation.Details.Name.Contains(sentByUser.FirstName) ? "Empower" : conversation.Details.Name;
+        var enqueueNotificationRequestDto = new EnqueueNotificationRequestDto
+        {
+          Title = conversationName,
+          Message = $"{sentByUser.FirstName}: {chatMessageGroupSendMessage?.MessageCreateRequest?.Message}",
+          Payload = new NotificationPayloadDto()
+          {
+            Action = NotificationTypes.NewMessage,
+            SystemPayload = new ConversationMessageNotificationDto()
+            {
+              ConversationId = conversation.Id
+            }
+          },
+          IsTransient = true,
+          RecipientUsers = usersList
+        };
+        result = await _fixNmsHttpClient.PostNotification(enqueueNotificationRequestDto, cancellationToken);
+      }
+      else
+      {
+        result.OperationException = new Exception($"Sender is not a participant of the conversation '{conversation.Id}'.");
+      }
+      return result;
+    }
+
 
     public async Task<OperationStatusWithObject<ConversationDto>> AddConversationParticipantsByBulkIdAsync(AddConversationParticipantsRequestDto addConversationParticipantsRequestDto, CancellationToken cancellationToken)
     {

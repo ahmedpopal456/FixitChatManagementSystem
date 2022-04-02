@@ -43,7 +43,6 @@ namespace Fixit.Chat.Management.Triggers
       });
 
       builder.Services.AddNmsServices("https://fixit-dev-nms-api.azurewebsites.net/");
-      builder.Services.AddSignalRCore();
       builder.Services.AddDocumentDbTableEntityResolver(configuration);
       builder.Services.AddTransient<IFixitFacadeFactory, FixitFacadeFactory>();
       builder.Services.AddLogging();

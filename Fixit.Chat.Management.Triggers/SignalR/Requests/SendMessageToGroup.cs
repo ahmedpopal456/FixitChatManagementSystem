@@ -11,6 +11,8 @@ using Fixit.Core.DataContracts.Chat.Messages;
 using Fixit.Chat.Management.Lib.Constants;
 using Fixit.Core.DataContracts.Notifications.Operations;
 using Fixit.Core.DataContracts.Notifications.Payloads;
+using Fixit.Chat.Management.Lib.Schemas;
+using Fixit.Chat.Management.Lib.Schemas.Enums;
 
 namespace Fixit.Chat.Management.Triggers.SignalR
 {
@@ -28,37 +30,33 @@ namespace Fixit.Chat.Management.Triggers.SignalR
       }
 
       var sentTimestampUtc = EpochHelper.GetTimestampMilliSecondsUtcNow();
-      var chatMessageGroupSendMessage = new ChatMessageGroupSendMessage()
+      conversationMessageCreateRequestDto.Message = string.IsNullOrWhiteSpace(conversationMessageCreateRequestDto.Message) ? null : conversationMessageCreateRequestDto.Message;
+      var onConversationDispatchedAction = new OnConversationDispatchedAction()
       {
-        ConversationId = conversationId,
-        MessageCreateRequest = conversationMessageCreateRequestDto,
-        SentByUserId = Guid.Parse(invocationContext.UserId),
-        SentTimestampUtc = sentTimestampUtc
+        Action = OnConversationDispatchedActions.AddMessagesToConversation,
+        ActionPayload = new ChatMessageGroupSendMessage()
+        {
+          ConversationId = conversationId,
+          MessageCreateRequest = conversationMessageCreateRequestDto,
+          SentByUserId = Guid.Parse(invocationContext.UserId),
+          SentTimestampUtc = sentTimestampUtc
+        }
       };
+
       var serviceBusMessage = new ServiceBusMessage()
       {
         SessionId = conversationId.ToString(),
-        Body = new BinaryData(chatMessageGroupSendMessage),
+        Body = new BinaryData(onConversationDispatchedAction),
       };
 
-      var insertMessageInQueueResponse = await _serviceBusMessagingClientMediator.SendMessageAsync(_sendMessageToGroup, serviceBusMessage, cancellationToken);
+      var insertMessageInQueueResponse = await _serviceBusMessagingClientMediator.SendMessageAsync(_onconversationactiondispatcher, serviceBusMessage, cancellationToken);
       if (insertMessageInQueueResponse.IsOperationSuccessful)
       {
         var bouncedMessage = _mapper.Map<ConversationMessageUpsertRequestDto, ConversationMessageDto>(conversationMessageCreateRequestDto);
+        bouncedMessage.Id = (DateTime.MaxValue.Ticks - sentTimestampUtc).ToString();
         bouncedMessage.UpdatedTimestampUtc = bouncedMessage.CreatedTimestampUtc = sentTimestampUtc;
-        
-        await Clients.Group(conversationId.ToString()).SendAsync(conversationId.ToString(), bouncedMessage);
 
-        await _fixNmsHttpClient.PostNotification(new EnqueueNotificationRequestDto()
-        {
-          Action = Core.DataContracts.Notifications.Enums.NotificationTypes.NewMessage,
-          Payload = new ConversationMessagePayloadDto()
-          {
-            Id = bouncedMessage.Id.ToString(),
-            SentByUser = bouncedMessage.CreatedByUser,
-            Message = bouncedMessage.Message,
-          }
-        }, cancellationToken);
+        await Clients.Group(conversationId.ToString()).SendAsync(conversationId.ToString(), bouncedMessage);
       }
     }
   }

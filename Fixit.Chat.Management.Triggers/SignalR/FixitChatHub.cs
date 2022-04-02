@@ -22,6 +22,7 @@ namespace Fixit.Chat.Management.Triggers.SignalR
     private readonly string _joinGroupQueue;
     private readonly string _sendMessageToGroup;
     private readonly string _broadcastUserTypingActivity = "broadcastusertypingactivity";
+    private readonly string _onconversationactiondispatcher = "onconversationactiondispatcher";
 
     private readonly IServiceBusMessagingClientMediator _serviceBusMessagingClientMediator;
 

@@ -19,7 +19,7 @@ namespace Fixit.Chat.Management.Lib.Mappers.Converters.Messages
         destination.Message = source.Message;
         destination.CreatedTimestampUtc = source.CreatedTimestampUtc;
         destination.UpdatedTimestampUtc = source.UpdatedTimestampUtc;
-        destination.Id = long.TryParse(source.RowKey, out long result) ? long.Parse(source.RowKey) : destination.Id;
+        destination.Id = !string.IsNullOrWhiteSpace(source.RowKey) ? source.RowKey : destination.Id;
         destination.CreatedByUser = !string.IsNullOrWhiteSpace(source.CreatedByUser) ? JsonConvert.DeserializeObject<UserBaseDto>(source.CreatedByUser) : default(UserBaseDto);
         destination.UpdatedByUser = !string.IsNullOrWhiteSpace(source.UpdatedByUser) ? JsonConvert.DeserializeObject<UserBaseDto>(source.UpdatedByUser) : default(UserBaseDto);
         destination.Attachments = !string.IsNullOrWhiteSpace(source.Attachments) ? JsonConvert.DeserializeObject<IEnumerable<MessageAttachmentDto>>(source.Attachments) : default(IEnumerable<MessageAttachmentDto>);

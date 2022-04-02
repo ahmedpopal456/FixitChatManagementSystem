@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Fixit.Chat.Management.Lib.Mediators.Conversations;
+using Fixit.Core.DataContracts.Chat.Operations.Messages;
 
 namespace Fixit.Chat.Management.Triggers.Mediators
 {
@@ -27,5 +28,13 @@ namespace Fixit.Chat.Management.Triggers.Mediators
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<OperationStatusWithObject<ConversationDto>> UpdateConversationLastMessageAsync(Guid conversationId, ConversationMessageDto lastMessage, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Enqueues notification
+    /// </summary>
+    /// <param name="chatMessageGroupSendMessage"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<OperationStatus> EnqueueNotificationForConversationLastMessageAsync(ChatMessageGroupSendMessage chatMessageGroupSendMessage, CancellationToken cancellationToken);
   }
 }

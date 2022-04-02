@@ -87,7 +87,8 @@ variable "service_bus_queue_names" {
   type = list(string)
   default = [
     "joingroupqueue",
-    "sendmessagetogroupqueue"
+    "sendmessagetogroupqueue",
+    "onconversationactiondispatcher"
   ]
 }
 

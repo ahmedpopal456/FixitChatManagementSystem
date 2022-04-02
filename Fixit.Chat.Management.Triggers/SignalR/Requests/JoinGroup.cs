@@ -1,4 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Fixit.Chat.Management.Lib.Schemas;
+using Fixit.Chat.Management.Lib.Schemas.Enums;
 using Fixit.Core.DataContracts.Chat.Operations.Messages;
 using Fixit.Core.DataContracts.Chat.Operations.Queries;
 using Fixit.Core.DataContracts.Users;
@@ -28,20 +30,25 @@ namespace Fixit.Chat.Management.Triggers.SignalR
         var existingParticipant = conversation.Participants?.FirstOrDefault(participant => participant.User.Id.ToString() == invocationContext.UserId);
         if (existingParticipant is null)
         {
-          var insertMessageInQueueResponse = await _serviceBusMessagingClientMediator.SendMessageAsync(_joinGroupQueue, new ServiceBusMessage()
+          var onConversationDispatchedAction = new OnConversationDispatchedAction()
           {
-            SessionId = conversationId,
-            Body = new BinaryData(new AddParticipantToChatMessage()
+            Action = OnConversationDispatchedActions.AddParticipantsToConversation,
+            ActionPayload = new AddParticipantToChatMessage()
             {
               ConversationId = Guid.Parse(conversationId),
               User = user,
-            }),
-          }, cancellationToken);
+            }
+          };
 
-          if (!insertMessageInQueueResponse.IsOperationSuccessful)
+          var serviceBusMessage = new ServiceBusMessage()
           {
+            SessionId = conversationId,
+            Body = new BinaryData(onConversationDispatchedAction),
+          };
+
+          var insertMessageInQueueResponse = await _serviceBusMessagingClientMediator.SendMessageAsync(_onconversationactiondispatcher, serviceBusMessage, cancellationToken);
+          if (!insertMessageInQueueResponse.IsOperationSuccessful)
             throw new ApplicationException($"Queueing Message to add a participant {invocationContext.UserId} to group {conversationId} failed with error: {insertMessageInQueueResponse.OperationException}");
-          }
         }
 
         await UserGroups.AddToGroupAsync(invocationContext.UserId, conversationId);
