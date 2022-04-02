@@ -31,7 +31,7 @@ namespace Empower.Chat.Management.Triggers.ServiceBus.Conversations
                                           IFixNmsHttpClient fixNmsHttpClient) : base(configurationProvider, conversationMessageMediator, conversationTriggersMediator, storageFactory, serviceBusMessagingClientMediator, fixNmsHttpClient) { }
 
     [FunctionName(nameof(OnConversationActionDispatcher))]
-    public async Task RunAsync([ServiceBusTrigger("onconversationactiondispatcher", Connection = "EMP-CHMS-SB-CS", IsSessionsEnabled = true)] ServiceBusReceivedMessage[] serviceBusReceivedMessages,
+    public async Task RunAsync([ServiceBusTrigger("onconversationactiondispatcher", Connection = "FIXIT-CHMS-SB-CS", IsSessionsEnabled = true)] ServiceBusReceivedMessage[] serviceBusReceivedMessages,
                                CancellationToken cancellationToken)
     {
       if (serviceBusReceivedMessages is { } && serviceBusReceivedMessages.Any())
