@@ -57,11 +57,10 @@ namespace Fixit.Chat.Management.Triggers.Mediators.Internal
         var usersList = users.ToList();
         usersList.Remove(sentByUser);
 
-        var conversationName = conversation.Details.Name.Contains(sentByUser.FirstName) ? "Empower" : conversation.Details.Name;
         var enqueueNotificationRequestDto = new EnqueueNotificationRequestDto
         {
-          Title = conversationName,
-          Message = $"{sentByUser.FirstName}: {chatMessageGroupSendMessage?.MessageCreateRequest?.Message}",
+          Title = $"New Message From {sentByUser.FirstName} {sentByUser.LastName}!",
+          Message = chatMessageGroupSendMessage?.MessageCreateRequest?.Message,
           Payload = new NotificationPayloadDto()
           {
             Action = NotificationTypes.NewMessage,
