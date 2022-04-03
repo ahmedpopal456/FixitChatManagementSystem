@@ -60,7 +60,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
 
             var enqueueNotificationRequestDto = new EnqueueNotificationRequestDto
             {
-              Title = $"New Chat Started Between {client.User.FirstName} and {craftsman.User.LastName}!",
+              Title = $"New Chat Started Between {client.User.FirstName} and {craftsman.User.FirstName}!",
               Message = "Be the first to send a message!",
               Payload = new NotificationPayloadDto()
               {
@@ -70,7 +70,7 @@ namespace Fixit.Chat.Management.Triggers.Functions
                   ConversationId = createResult.Result.Id
                 }
               },
-              IsTransient = true,
+              IsTransient = false,
               RecipientUsers = createResult.Result.Participants.Select(item => item.User)
             };
             await _fixNmsHttpClient.PostNotification(enqueueNotificationRequestDto, cancellationToken);
